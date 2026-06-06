@@ -55,25 +55,37 @@ export async function loadDashboard() {
 export async function loadClassrooms({ includeArchived = false } = {}) {
   const { supabase, user, isConfigured } = await requireAppUser();
   if (!supabase || !user) {
-    return { isConfigured, classrooms: [], teachers: [], students: [] };
+    return { isConfigured, classrooms: [], teachers: [], students: [], recentRecords: [] };
   }
+
+  const today = todayISO();
+  const since = new Date();
+  since.setDate(since.getDate() - 29);
 
   let classroomsQuery = supabase.from("classrooms").select("*").order("created_at");
   if (!includeArchived) {
     classroomsQuery = classroomsQuery.is("archived_at", null);
   }
 
-  const [{ data: classrooms }, { data: teachers }, { data: students }] = await Promise.all([
+  const [{ data: classrooms }, { data: teachers }, { data: students }, { data: recentSessions }] = await Promise.all([
     classroomsQuery,
     supabase.from("classroom_teachers").select("*"),
     supabase.from("students").select("*").order("number"),
+    supabase.from("attendance_sessions").select("id").gte("attendance_date", since.toISOString().slice(0, 10)).lte("attendance_date", today),
   ]);
+
+  const recentSessionIds = (recentSessions ?? []).map((session) => session.id);
+  const { data: recentRecords } =
+    recentSessionIds.length > 0
+      ? await supabase.from("attendance_records").select("status").in("session_id", recentSessionIds)
+      : { data: [] };
 
   return {
     isConfigured,
     classrooms: (classrooms ?? []) as Classroom[],
     teachers: (teachers ?? []) as ClassroomTeacher[],
     students: (students ?? []) as Student[],
+    recentRecords: (recentRecords ?? []) as AttendanceRecord[],
   };
 }
 

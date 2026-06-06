@@ -3,14 +3,20 @@ import { Card, LinkButton, SetupNotice } from "@/components/ui";
 import { loadClassrooms } from "@/lib/data";
 
 export default async function ReportsIndexPage() {
-  const { isConfigured, classrooms, students } = await loadClassrooms({ includeArchived: true });
+  const { isConfigured, classrooms, students, recentRecords } = await loadClassrooms({ includeArchived: true });
   if (!isConfigured) return <SetupNotice />;
+  const attendedRecords = recentRecords.filter((record) => record.status === "present" || record.status === "late").length;
+  const averageAttendance = recentRecords.length > 0 ? Math.round((attendedRecords / recentRecords.length) * 100) : 0;
 
   return (
     <AppShell>
       <header className="mb-5">
         <h1 className="text-2xl font-bold text-slate-950">รายงาน</h1>
       </header>
+      <Card className="mb-4 p-4">
+        <p className="text-sm text-slate-500">อัตราการมาเรียนเฉลี่ย 30 วันล่าสุด</p>
+        <p className="mt-2 text-3xl font-bold text-slate-950">{averageAttendance}%</p>
+      </Card>
       <div className="grid gap-3">
         {classrooms.map((room) => (
           <Card key={room.id} className="flex items-center justify-between p-4">

@@ -1,8 +1,8 @@
-import { Plus } from "lucide-react";
-import { createClassroom } from "@/app/actions";
-import { ActionForm, SubmitButton } from "@/components/action-form";
+import Link from "next/link";
+import { Archive, ArrowLeft, ChevronRight } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
-import { Card, Field, LinkButton, SetupNotice } from "@/components/ui";
+import { CreateClassroomCard } from "@/components/create-classroom-card";
+import { Card, LinkButton, SetupNotice } from "@/components/ui";
 import { academicYearNow } from "@/lib/dates";
 import { loadClassrooms } from "@/lib/data";
 
@@ -20,12 +20,15 @@ export default async function ClassroomsPage({ searchParams }: { searchParams: P
           <h1 className="text-2xl font-bold text-slate-950">{showArchived ? "ห้องเรียนที่เก็บถาวร" : "ห้องเรียน"}</h1>
           <p className="text-sm text-slate-500">จัดการห้องเรียน ครูร่วม และรายชื่อนักเรียน</p>
         </div>
-        <LinkButton
-          href={showArchived ? "/classrooms" : "/classrooms?archived=1"}
-          className="border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-        >
-          {showArchived ? "กลับไปห้องเรียนปัจจุบัน" : "ดูห้องเรียนที่เก็บถาวร"}
-        </LinkButton>
+        {showArchived ? (
+          <Link
+            href="/classrooms"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-[0.99]"
+          >
+            <ArrowLeft size={16} />
+            กลับไปห้องเรียน
+          </Link>
+        ) : null}
       </header>
       <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
         <div className="grid gap-3">
@@ -46,17 +49,25 @@ export default async function ClassroomsPage({ searchParams }: { searchParams: P
           ))}
           {visibleClassrooms.length === 0 ? <p className="py-8 text-center text-sm text-slate-500">{showArchived ? "ยังไม่มีห้องเรียนที่เก็บถาวร" : "ยังไม่มีห้องเรียน"}</p> : null}
         </div>
-        {!showArchived ? <Card className="p-4">
-          <h2 className="mb-3 flex items-center gap-2 font-bold text-slate-950">
-            <Plus size={18} />
-            เพิ่มห้องเรียน
-          </h2>
-          <ActionForm action={createClassroom} className="grid gap-3" successMessage="สร้างห้องเรียนแล้ว">
-            <Field label="ชื่อห้องเรียน" name="name" placeholder="ม.1/1" />
-            <Field label="ปีการศึกษา" name="academic_year" defaultValue={academicYearNow()} />
-            <SubmitButton pendingLabel="กำลังสร้าง...">บันทึก</SubmitButton>
-          </ActionForm>
-        </Card> : null}
+        {!showArchived ? (
+          <div className="grid gap-3">
+            <CreateClassroomCard academicYear={academicYearNow()} />
+            <Link
+              href="/classrooms?archived=1"
+              className="group flex min-h-24 items-center gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50/60 active:scale-[0.99]"
+            >
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-amber-50 text-amber-700 ring-1 ring-amber-100 transition group-hover:bg-amber-100">
+                <Archive size={22} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-bold text-slate-950">ห้องเรียนที่เก็บถาวร</span>
+                <span className="mt-1 block text-sm leading-5 text-slate-500">ดูห้องเรียนที่ซ่อนไว้จากรายการปัจจุบัน และกู้คืนเมื่อจำเป็น</span>
+                <span className="mt-2 inline-flex text-sm font-semibold text-emerald-700">ดูรายการ</span>
+              </span>
+              <ChevronRight className="shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-emerald-700" size={20} />
+            </Link>
+          </div>
+        ) : null}
       </div>
     </AppShell>
   );

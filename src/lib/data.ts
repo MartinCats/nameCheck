@@ -27,28 +27,19 @@ export async function loadDashboard() {
   }
 
   const today = todayISO();
-  const since = new Date();
-  since.setDate(since.getDate() - 29);
 
-  const [{ data: classrooms }, { data: students }, { data: sessions }, { data: recentSessions }] = await Promise.all([
+  const [{ data: classrooms }, { data: students }, { data: sessions }] = await Promise.all([
     supabase.from("classrooms").select("*").is("archived_at", null).order("created_at"),
-    supabase.from("students").select("*").eq("active", true),
-    supabase.from("attendance_sessions").select("*").eq("attendance_date", today),
-    supabase.from("attendance_sessions").select("id, classroom_id, attendance_date").gte("attendance_date", since.toISOString().slice(0, 10)).lte("attendance_date", today),
+    supabase.from("students").select("id, classroom_id, active").eq("active", true),
+    supabase.from("attendance_sessions").select("id, classroom_id, attendance_date").eq("attendance_date", today),
   ]);
-
-  const recentSessionIds = (recentSessions ?? []).map((session) => session.id);
-  const { data: recentRecords } =
-    recentSessionIds.length > 0
-      ? await supabase.from("attendance_records").select("status").in("session_id", recentSessionIds)
-      : { data: [] };
 
   return {
     isConfigured,
     classrooms: (classrooms ?? []) as Classroom[],
     students: (students ?? []) as Student[],
     sessions: (sessions ?? []) as AttendanceSession[],
-    recentRecords: (recentRecords ?? []) as AttendanceRecord[],
+    recentRecords: [],
   };
 }
 
